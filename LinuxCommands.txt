@@ -1,0 +1,55 @@
+Cluster commands – do all analyses in scratch (500gb)
+Login 
+ssh -X rshukla@scclogin.camhres.ca
+then: ssh -X dev01
+Launch modules
+module avail
+module load <module>
+**After logging into to dev01, type “screen” – important to save stuff
+
+BASESPACE
+Create “basespace” folder: mkdir basespace
+Link basemount here: basemount basespace
+Change directories: cd basespace
+List files (white)/folders (purple) in here: ls
+Cd to projects, then to appropriate run, then samples
+Search for all .fastq.gz: find ./ -name "*.fastq.gz" (or just ls)
+Find/Copy to new directory
+find ./ -name "*.fastq.gz" -exec cp \{\} /genome/scratch/Sibille/dnewton/RapidRun/ \;
+Bolded part of above changes based on your target dir
+FASTQC
+Make sure RNASEQ module is loaded: module load RNASEQ/1.0.0
+Load Java 1.8: module load JAVA/1.8.0
+Run FastQC: fastqc –O “<target directory>” *(or *.fastq.gz)
+
+REFERENCE GENOME AND ANNOTATIONS
+Get reference genome from: ftp://ftp.ensembl.org/pub/release-86/fasta/homo_sapiens/dna/
+Download to “reference” folder: cd <reference dir>
+wget -c ftp://ftp.ensembl.org/pub/release-86/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz
+Get annotations from: ftp://ftp.ensembl.org/pub/release-86/gtf/homo_sapiens/
+wget –c ftp://ftp.ensembl.org/pub/release-86/gtf/homo_sapiens/Homo_sapiens.GRCh38.86.gtf.gz
+Extract both reference genome and annotations file:
+gunzip Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz
+gunzip Homo_sapiens.GRCh38.86.gtf.gz
+Make new folder: GRCh38 – subfolders: hisat2, fasta, genes
+Move annotations(.gtf) to genes: mv “file” <destination>
+Move reference genome to fasta
+Run his: **30 mins
+hisat2-build -p 16 “reference genome file” <hisat2 dir>
+Get preliminary alignment statistics
+Unpaired (one off)
+hisat2 -x  $INDEX/XY --known-splicesite-infile $REFERENCE/splicesites.tsv -p 8 -U F1R10_S10_L001_R1_001.fastq.gz,F1R10_S10_L002_R1_001.fastq.gz | samtools view -bS - | samtools sort > $BAM_U/F1R10.bam
+Paired (one off)
+hisat2 -x  $INDEX/XY --known-splicesite-infile $REFERENCE/splicesites.tsv -p 8 -1 F1R10_S10_L001_R1_001.fastq.gz,F1R10_S10_L002_R1_001.fastq.gz -2 F1R10_S10_L001_R2_001.fastq.gz,F1R10_S10_L002_R2_001.fastq.gz | samtools view -bS - | samtools sort > $BAM_P/F1R10.bam
+Parallel Processing (to run all subjects, do this)
+Open “hisat_cmd_gen.bash”
+Put proper file directories for sources/output etc
+Change 2nd line commented SRC_DIR
+Put in main directory
+Load parallel processing module: module load GNU_PARALLEL
+Create cmd.list: ./hisat_cmd_gen.bash > cmd.list
+Run parallel processing: qbatch    -c4 -j4 --ppj 8  -w 24:00:00 cmd.list
+
+
+
+
