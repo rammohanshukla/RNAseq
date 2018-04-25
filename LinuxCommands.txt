@@ -15,7 +15,9 @@ List files (white)/folders (purple) in here: ls
 Cd to projects, then to appropriate run, then samples
 Search for all .fastq.gz: find ./ -name "*.fastq.gz" (or just ls)
 Find/Copy to new directory
+```Shell
 find ./ -name "*.fastq.gz" -exec cp \{\} /genome/scratch/Sibille/dnewton/RapidRun/ \;
+```
 Bolded part of above changes based on your target dir
 FASTQC
 Make sure RNASEQ module is loaded: module load RNASEQ/1.0.0
