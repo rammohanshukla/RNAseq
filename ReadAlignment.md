@@ -1,24 +1,47 @@
 Cluster commands – do all analyses in scratch (500gb)
-Login 
+Login to SSH
+```Tsch
 ssh -X rshukla@scclogin.camhres.ca
-then: ssh -X dev01
-Launch modules
-module avail
-module load <module>
-**After logging into to dev01, type “screen” – important to save stuff
-
-BASESPACE
-Create “basespace” folder: mkdir basespace
-Link basemount here: basemount basespace
-Change directories: cd basespace
-List files (white)/folders (purple) in here: ls
-Cd to projects, then to appropriate run, then samples
-Search for all .fastq.gz: find ./ -name "*.fastq.gz" (or just ls)
-Find/Copy to new directory
-```Shell
-find ./ -name "*.fastq.gz" -exec cp \{\} /genome/scratch/Sibille/dnewton/RapidRun/ \;
 ```
-Bolded part of above changes based on your target dir
+Then login to development node 1 or 2 (dev01 or dev02)
+```Tsch
+ssh -X dev01
+```
+-X stands for X server, mostly used for any any program having GUI interphase
+Check for avilable modules
+```Tsch
+module avail
+```
+Load the private module RNASEQ/1.0.0 (has all the tools required for alignment and alignment QC and further anlysis)
+```Tsch
+module load RNASEQ/1.0.0
+```
+create new screen with session name
+```Tsch
+screen -S your_session_name
+```
+BASESPACE
+Create “basespace” folder: 
+
+```Tsch
+mkdir basespace
+```
+Link basemount here: 
+```Tsch
+basemount basespace
+```
+Change directories:
+```Tsch
+cd basespace
+```
+Search for all .fastq.gz:
+```Tsch
+find ./ -name "*.fastq.gz" 
+```
+Find/Copy to new the target directory
+```Tsch
+find ./ -name "*.fastq.gz" -exec cp \{\} <Target directory path> \;
+```
 FASTQC
 Make sure RNASEQ module is loaded: module load RNASEQ/1.0.0
 Load Java 1.8: module load JAVA/1.8.0
