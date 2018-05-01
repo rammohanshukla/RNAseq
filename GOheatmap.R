@@ -1,15 +1,9 @@
-#pval_thresh <- 0.001
+#Original script from Bader Lab (Ruth)
 pval_thresh <- 0.05
 fdr_thresh <- 0.25
 NES_thresh <- 0
 min_experiments <- 1
-
-similarity_cutoff <- "0.5"
-similarity_metric <- "OVERLAP"
-
-#set working directory
-#setwd("./RAM_Etiennelab_celltypes/");
-
+# Gsea_reports_allcelltypes.txt file was made from the GSEA outputs using bash
 gsea_enrichments <- read.table("Gsea_reports_allcelltypes.txt", header = TRUE, sep = "\t",as.is = TRUE, quote="\"")
 
 colnames(gsea_enrichments) <- c("Experiment","Name","GS","GS DETAILS","SIZE","ES", "NES",
@@ -17,22 +11,17 @@ colnames(gsea_enrichments) <- c("Experiment","Name","GS","GS DETAILS","SIZE","ES
 
 
 #filter gsea enrichment by thresholds
-#only include NES scores that are > 0 (for the proteomics data the under-enriched is not fitting for this analysis)
+#only include NES scores that are > 0 or < 0
 gsea_enrichments_filtered <- gsea_enrichments[which(gsea_enrichments[,'NOM p-val']<=pval_thresh & 
                                                     gsea_enrichments[,'FDR q-val']<=fdr_thresh & 
                                                     gsea_enrichments[,'NES']<NES_thresh),]
 
-
-#Save the two files
-#write.csv(gsea_enrichments,file = "gsea_enrichments.csv")
-write.csv(gsea_enrichments_filtered,file = "gsea_enrichments_filtered_Down.csv")
 #row_names - get the unique set of pathways that is contained in the collated data.  column 2 indicates the pathway name
 row_names <- unique(gsea_enrichments_filtered[,2])
 length(row_names)
 #column_names - get the unique set of experiments contains in the collated data.  column 1 indicates the experiment type
 column_names <- unique(gsea_enrichments_filtered[,1])
 length(column_names)
-#colnames(pathways2experiments_significant) <- c("HypoH","HypoA","HypoB","HypoC","HypoF","HypoG")
 
 #create a matrix which will store the cell type profiles for all genesets in the thresholded set
 pathways2experiments_significant <- matrix(nrow=length(row_names), ncol=length(column_names),dimnames=list(row_names, column_names))
@@ -99,7 +88,6 @@ for (i in 1:length(row_names_subset)){
   #get the first rank at max
   collapsed_enrichments[i,10] <- max(subset[,11])
   collapsed_enrichments[i,11] <- subset[1,12]
-
 }
 
 
@@ -157,77 +145,10 @@ library(pheatmap)
 library("RColorBrewer")
 col.pal <- rev(brewer.pal(3,"Reds"))
 
+#edit names
 new_names <- lapply(rownames(pathways2experiments_significant),function(x){unlist(strsplit(x,"%"))[1]} )
-
 dim(pathways2experiments_significant)
 rownames(pathways2experiments_significant) <- new_names
-tree_results <- pheatmap(mat=pathways2experiments_significant,show_rownames = FALSE,color = col.pal,)
+#Create heatmap
+pheatmap(mat=pathways2experiments_significant,show_rownames = FALSE,color = col.pal,)
 
-############
-
-colnames(pathways2experiments_significant)
-rownames(pathways2experiments_significant)[which(pathways2experiments_significant[, "OY_SST"]<0 &
-      pathways2experiments_significant[, "OY_PYC"] == 0 &
-      pathways2experiments_significant[, "OY_VIP"] == 0 &
-      pathways2experiments_significant[, "OY_PV"] == 0)]
-
-cutree(tree_results$tree_row,k=4)
-
-#to save on computation you can reload previous computed collapsed enrichments
-#enrichment_results_file_name <- paste("mastermap_enrichments_fdr", fdr_thresh, "_minexp", min_experiments,".txt", sep="")
-#collapsed_enrichments <- read.table(enrichment_results_file_name, , header = TRUE, sep = "\t",as.is = TRUE, quote="\"")
-
-Sys.getlocale()
-Sys.setlocale(locale="C")
-
-collapsed_enrichments <- collapsed_enrichments[grep(collapsed_enrichments[,1],
-                                              pattern = "TCR SIGNALING IN NA",
-                                              invert=TRUE),]
-collapsed_enrichments <- collapsed_enrichments[grep(collapsed_enrichments[,1],
-                                              pattern = "LOSS OF PROTEINS REQUIRED FOR INTERPHASE MICROTUBULE",
-                                              invert=TRUE),]
-collapsed_enrichments <- collapsed_enrichments[grep(collapsed_enrichments[,1],
-                                              pattern = "DOWNSTREAM SIGNALING IN NA",
-                                              invert=TRUE),]
-
-enrichment_results_file_name <- paste("mastermap_enrichments_pval", pval_thresh, "_minexp", min_experiments,".txt", sep="")
-write.table( collapsed_enrichments, file=enrichment_results_file_name, sep="\t", row.names=FALSE, col.names=TRUE,quote=FALSE)
-
-library(RJSONIO)
-library(httr)
-
-port.number=1234
-base.url = paste("http://localhost:",toString(port.number),"/v1", sep="")
-
-print(base.url)
-
-version.url = paste(base.url,"version", sep="/")
-cytoscape.version = GET(version.url)
-cy.version = fromJSON(rawToChar(cytoscape.version$content))
-print(cy.version)
-
-enrichmentmap.url <- paste(base.url, "commands", "enrichmentmap", "build", sep="/")
-#mac file paths
-gmt_file="/Users/risserlin/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/notebooks/One_expression_file_example/GSEA_results/Human_AllPathwaysGOBP_noiea_May_14_2013_symbol.gmt"
-path_to_file="/Users/risserlin/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/notebooks/One_expression_file_example/GSEA_results/"
-exp_file="/Users/risserlin/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/notebooks/One_expression_file_example/Human_Proteome_Map_spectral_count_gene_tissue.txt"
-
-gmt_file="/Users/risserlin/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/Mastermap_example/notebooks/RAM_Etiennelab_celltypes/Mouse_GOBP_AllPathways_no_GO_iea_September_01_2016_symbol.gmt"
-path_to_file="/Users/risserlin/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/Mastermap_example/notebooks/RAM_Etiennelab_celltypes/"
-exp_file="/Users/risserlin/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/Mastermap_example/notebooks/RAM_Etiennelab_celltypes/oldyoung_expression.txt"
-#wi
-
-#windows file paths
-#gmt_file="C:/Users/zaphod/Ruth_dropbox/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/notebooks/One_expression_file_example/GSEA_results/Human_AllPathwaysGOBP_noiea_May_14_2013_symbol.gmt"
-#exp_file="C:/Users/zaphod/Ruth_dropbox/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/notebooks/One_expression_file_example/Human_Proteome_Map_spectral_count_gene_tissue.gct"
-#path_to_file="C:/Users/zaphod/Ruth_dropbox/Dropbox (Bader Lab)/Ruth Isserlin's files/Enrichment_Analyses/Mastermap/notebooks/One_expression_file_example/GSEA_results/"
-
-enr_file = paste(path_to_file,enrichment_results_file_name,sep="")
-
-em_params <- list(analysisType = "gsea",enrichmentsDataset1 = enr_file,pvalue="1.0",qvalue="0.05",
-                  expressionDataset1 = exp_file, gmtFile = gmt_file,
-                  similaritycutoff=similarity_cutoff,coeffecients=similarity_metric)
-
-response <- GET(url=enrichmentmap.url, query=em_params)
-
-content(response, "text",encoding="ISO-8859-1")
