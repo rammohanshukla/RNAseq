@@ -6,18 +6,10 @@ library(reshape2)
 library(plyr)
 
 list.files(pattern = "*.txt")
-#resultGroupsUp <- read_tsv("pathways2experiments_significant_Up_0.05.txt") %>% rename(X1 = "name")
-#resultGroupsDown <- read_tsv("pathways2experiments_significant_Down_0.05.txt") %>% rename(X1 = "name")
 resultGroupsUp <- read_tsv("pathways2experiments_significant_Positive_0.05.txt");rename(resultGroupsUp,replace = c("X1" = "name"))
-#resultGroupsUp %<>% filter( grepl("GO:", name)) %>% mutate(goID = gsub(".*%","" ,name))
 resultGroupsDown <- read_tsv("pathways2experiments_significant_Negative_0.05.txt"); rename(resultGroupsDown,replace = c("X1" = "name"))
-#resultGroupsDown %<>% filter( grepl("GO:", name)) %>% mutate(goID = gsub(".*%","" ,name))
 (resultGroups <- bind_rows(resultGroupsUp, resultGroupsDown))
-#resultGroups %<>% filter( grepl("GO:", name)) %>% mutate(goID = gsub(".*%","" ,name))
 (resultGroups %<>% filter( grepl("GO:", X1)) %>% mutate(goID = gsub(".*%","" ,X1)))
-#write.csv(resultGroups,file = "AgeCT_SignificantPathways_0.05.csv")
-
-#resultGroups <- read.csv("CT_SignificantPathways_0.05.csv",stringsAsFactors = F)
 
 GOAncestorMap <- as.list(GOBPANCESTOR)
 #GOAncestorMap <- as.list(GOMFANCESTOR)
@@ -54,27 +46,6 @@ selectedGroups <- read_tsv("SelectedGroupsBP.tsv")
 #selectedGroups <- read_tsv("SelectedGroupsMF.tsv")
 
 ##################################################
-resultGroups <- as.data.frame(resultGroups)
-head(rownames(resultGroups))
-# For each selectedGOID that is in selectedGroups$GOID print the GOID and the associated GO terms
-for(selectedGOID in selectedGroups$GOID) { #for each targetted GO group
-  print(selectedGOID)
-  print(Term(selectedGOID))
-  }
-
-# For each rowNumber that is in resultGroups (and given by commands rownames(resultGroups)) print the GOID and the associated GO terms
-
-for(rowNumber in rownames(resultGroups)) { #for each row in the result table
-    print(goID <- resultGroups[rowNumber, "goID"])
-    print(rowName <- Term(selectedGOID))
-}
-    if(is.na(rowName)) { rowName <- selectedGOID }
-    resultGroups[rowNumber, rowName]= selectedGOID %in% unlist(GOAncestorMap[goID]) #test if it is one of the ancestors/parents
-#######################  
-
-
-
-
 resultGroups <- as.data.frame(resultGroups)
 head(rownames(resultGroups))
 for(selectedGOID in selectedGroups$GOID) { #for each targetted GO group
@@ -115,7 +86,4 @@ for(expVar in expVars) {
     }
   }
 }
-
-
-
-write.csv(allResults,"Samdbox_SummaryBP.csv")
+write.csv(allResults,"SummaryBP.csv")
