@@ -1,4 +1,3 @@
-#Original script from Bader Lab (Ruth)
 pval_thresh <- 0.05
 fdr_thresh <- 0.25
 NES_thresh <- 0
